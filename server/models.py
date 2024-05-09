@@ -40,8 +40,8 @@ class Invitation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.String(50))
     time = db.Column(db.DateTime, default=db.func.now())
-    assessment_id = db.Column(db.Integer, db.ForeignKey('assessment.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    # assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     user = db.relationship("User", back_populates="invitations")
 
@@ -53,7 +53,7 @@ class Feedback(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     feedback_text = db.Column(db.String)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     # Establishing the one-to-many relationship with Feedback model
     user = db.relationship("User", back_populates="feedbacks")
