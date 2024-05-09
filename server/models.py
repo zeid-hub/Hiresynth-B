@@ -31,8 +31,8 @@ class Question(db.Model):
     type = db.Column(db.String(50), nullable=False)  # e.g., 'multiple choice', 'subjective'
 
     # Additional fields (if needed)
-    options = db.Column(db.JSON)  # JSON field to store options for multiple choice questions
-    correct_answer = db.Column(db.String(255))  # For multiple choice questions, store the correct answer
+    options = db.Column(db.JSON) 
+    correct_answer = db.Column(db.String(255)) 
 
     # Relationships
     assessment = db.relationship('Assessment', back_populates='questions')
