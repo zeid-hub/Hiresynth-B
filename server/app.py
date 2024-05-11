@@ -96,7 +96,7 @@ class LogoutUser(Resource):
         token = TokenBlocklist(jti=jti, created_at=now)
         db.session.add(token)
         db.session.commit()
-        return make_response(
+        return make_response(\
             jsonify(
                 {"message": "Successfully logged out"}
             ),
