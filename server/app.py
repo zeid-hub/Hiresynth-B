@@ -1,7 +1,6 @@
 from config import app, db, request, make_response, api, Resource, jsonify, jwt, create_access_token, jwt_required, current_user, get_jwt, set_access_cookies
-from models import User
-import datetime
-from datetime import timedelta
+from models import User, Feedback, Invitation
+from datetime import timedelta, datetime
 
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
@@ -104,6 +103,48 @@ class LogoutUser(Resource):
         )
 api.add_resource(LogoutUser, "/logout")
 
+class Feedbacks(Resource):
+    def post(self):
+        data = request.get_json()
+
+        new_feedback = Feedback(
+            feedback_text = data["feedback_text"],
+            user_id = data["user_id"]
+        )
+
+        # Add the new feedback to the database session
+        db.session.add(new_feedback)
+        db.session.commit()
+
+        response = {
+            'message': 'Feedback created successfully'
+        }
+        return make_response(jsonify(response), 201)
+
+api.add_resource(Feedbacks, "/feedback")
+
+class Invitations(Resource):
+    def post(self):
+        data = request.get_json()
+
+        new_invitation = Invitation(
+            status=data["status"],
+            time=datetime.now(),
+            assessment_id=data["assessment_id"],
+            user_id=data["user_id"]
+        )
+
+        db.session.add(new_invitation)
+        db.session.commit()
+
+        response = {
+            'message': 'Invitation created successfully'
+        }
+        return make_response(jsonify(response), 201)
+
+api.add_resource(Invitations, "/invitations")
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
+
+    

@@ -14,7 +14,7 @@ class User(db.Model):
 
     feedbacks = db.relationship("Feedback", back_populates="user")
     invitations = db.relationship("Invitation", back_populates="user")
-    assessment = db.relationship("Assessment", back_populates = "user")
+    assessments = db.relationship("Assessment", back_populates = "user")
     test_session = db.relationship("TestSession", back_populates = "users")
     assessment_scores = db.relationship("AssessmentScore", back_populates = "user")
 
@@ -30,7 +30,7 @@ class User(db.Model):
     def validates (self, my_password):
         return bcrypt.check_password_hash(self.password_hash, my_password)
 
-    def __repr__(self):
+    def _repr_(self):
         return f"<User {self.username}, {self.email}, {self._password_hash}>"
 
 class TokenBlocklist(db.Model):
@@ -49,11 +49,11 @@ class Invitation(db.Model):
 
     user = db.relationship("User", back_populates="invitations")
 
-    def __repr__(self):
+    def _repr_(self):
         return f"<Invitation(id={self.id}, status={self.status}, time={self.time})>"
 
 class Feedback(db.Model):
-    __tablename__ = 'feedbacks'
+    __tablename__= 'feedbacks'
 
     id = db.Column(db.Integer, primary_key=True)
     feedback_text = db.Column(db.String)
@@ -62,7 +62,7 @@ class Feedback(db.Model):
     # Establishing the one-to-many relationship with Feedback model
     user = db.relationship("User", back_populates="feedbacks")
 
-    def __repr__(self):
+    def _repr_(self):
         return f"<Feedback(id={self.id}, feedback_text={self.feedback_text})>"
     
 class Assessment(db.Model):
@@ -78,11 +78,12 @@ class Assessment(db.Model):
     # Relationships
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     user = db.relationship("User", back_populates="assessments")
+    questions = db.relationship("Question", back_populates="assessment")
     assessment_scores = db.relationship("AssessmentScore", back_populates = "assessment")
     test_session = db.relationship("TestSession", back_populates = "assessments")
 
     # Representation
-    def __repr__(self):
+    def _repr_(self):
         return f"<Assessment {self.title}>"
     
 class Question(db.Model):
@@ -107,8 +108,9 @@ class TestSession(db.Model):
     time_taken = db.Column(db.Integer, nullable=False)  # Time taken by the user to complete the test
     submitted_answers = db.Column(db.Integer, nullable=False)  # Number of submitted answers
     submitted_at = db.Column(db.DateTime, default=datetime.now, nullable=False)  # Timestamp when the test was submitted
-    assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id', name='fk_testsession_assessment_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', name='fk_testsession_user_id'), nullable=False)
+
 
     #relationship with Assessment model
     assessments = db.relationship("Assessment", back_populates="test_session")
@@ -117,7 +119,7 @@ class TestSession(db.Model):
     users = db.relationship("User", back_populates="test_session")
     
     
-    def __repr__(self):
+    def _repr_(self):
         return f"<TestSession id={self.id}, time_taken={self.time_taken}, submitted_answers={self.submitted_answers}, submitted_at={self.submitted_at}>"
 
 class AssessmentScore(db.Model):
@@ -134,5 +136,5 @@ class AssessmentScore(db.Model):
     user = db.relationship("User", back_populates="assessment_scores")
 
     
-    def __repr__(self):
+    def _repr_(self):
         return f"<AssessmentScore id={self.id}, score={self.score}, completion_date={self.completion_date}>"
