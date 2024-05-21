@@ -62,35 +62,95 @@ class Feedback(db.Model):
     def __repr__(self):
         return f"<Feedback(id={self.id}, feedback_text={self.feedback_text})>"
     
+class SubjectiveQuestion(db.Model):
+    __tablename__ = 'subjectivequestions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    question_text = db.Column(db.Text, nullable=False)
+    maximum_length = db.Column(db.Integer)  # Maximum character limit for the response
+    required = db.Column(db.Boolean, default=True)  # Whether the question is mandatory or optional
+
+    topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=False)
+    topic = db.relationship('Topic', backref='subjectivequestions')
+    
+    def __repr__(self):
+        return f"<SubjectiveQuestion {self.id}: {self.question_text}>"
+
+class Topic(db.Model):
+    __tablename__ = 'topics'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False, unique=True)
+
+    def __repr__(self):
+        return f"<Topic {self.name}>"
+
+class MultipleOption(db.Model):
+    __tablename__ = 'multiple_questions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    question_text = db.Column(db.Text, nullable=False)
+    correct_option_id = db.Column(db.Integer, db.ForeignKey('options.id'), nullable=True)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=False)
+
+    topic = db.relationship('Topic', backref='multiple_questions')
+    options = db.relationship('Option', backref='multiple_question', foreign_keys=[correct_option_id])
+
+    def __repr__(self):
+        return f"<MultipleQuestion {self.id}: {self.question_text}>"
+
+    @property
+    def has_three_options(self):
+        return len(self.options) == 3
+
+class Option(db.Model):
+    __tablename__ = 'options'
+
+    id = db.Column(db.Integer, primary_key=True)
+    option_text = db.Column(db.Text, nullable=False)
+    multiple_question_id = db.Column(db.Integer, db.ForeignKey('multiple_questions.id'), nullable=False)
+
+    def __repr__(self):
+        return f"<Option {self.id}: {self.option_text}>"
+    
+class CodeChallenge(db.Model):
+    __tablename__ = 'code_challenges'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    languages = db.Column(db.String(), nullable=False)
+    correct_answer = db.Column(db.Text, nullable=False)  
+
+    def __repr__(self):
+        return f"<CodeChallenge {self.title}, Correct Answer: {self.correct_answer}, Languages: {self.languages}>"
+
 class Assessment(db.Model):
     __tablename__ = 'assessments'
 
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
+    title = db.Column(db.String(), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    type = db.Column(db.String(50), nullable=False)  # e.g., 'multiple choice', 'subjective', 'coding challenge'
-    time_limit = db.Column(db.Integer) 
-    status = db.Column(db.String(50), nullable=False, default='draft')  # 'draft' or 'published'
+    creator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=False)
 
-    # Relationships
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    user = db.relationship("User", back_populate="assessments")
+    creator = db.relationship('User', backref='assessments')
+    topic = db.relationship('Topic', backref='assessments')
 
-    # Representation
+    questions = db.relationship('Question', secondary='assessment_question', backref='assessments')
+
     def __repr__(self):
         return f"<Assessment {self.title}>"
-    
+
+# Association Table for Many-to-Many Relationship between Assessment and Question
+assessment_question = db.Table('assessment_question',
+    db.Column('assessment_id', db.Integer, db.ForeignKey('assessments.id'), primary_key=True),
+    db.Column('question_id', db.Integer, db.ForeignKey('questions.id'), primary_key=True)
+)
+
 class Question(db.Model):
     __tablename__ = 'questions'
 
     id = db.Column(db.Integer, primary_key=True)
-    assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id'), nullable=False)
-    text = db.Column(db.Text, nullable=False)
-    type = db.Column(db.String(50), nullable=False)  # e.g., 'multiple choice', 'subjective'
-
-    # Additional fields (if needed)
-    options = db.Column(db.JSON) 
-    correct_answer = db.Column(db.String(255)) 
-
-    # Relationships
-    assessment = db.relationship('Assessment', back_populates='questions')
+    question_text = db.Column(db.Text, nullable=False)
+    question_type = db.Column(db.String(), nullable=False)  # e.g., multiple choice, coding challenge, subjective
