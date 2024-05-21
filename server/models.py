@@ -14,9 +14,9 @@ class User(db.Model):
 
     feedbacks = db.relationship("Feedback", back_populates="user")
     invitations = db.relationship("Invitation", back_populates="user")
-    assessment = db.relationship("Assessment", back_populates = "user")
-    test_session = db.relationship("TestSession", back_populates = "users")
-    assessment_scores = db.relationship("AssessmentScore", back_populates = "user")
+    assessments = db.relationship("Assessment", back_populates="user")
+    assessment_scores = db.relationship("AssessmentScore", back_populates="user") 
+    test_session = db.relationship("TestSession", back_populates="users")
 
     @hybrid_property
     def password_hash(self):

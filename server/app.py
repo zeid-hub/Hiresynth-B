@@ -1,13 +1,12 @@
-from flask import jsonify, request, redirect, url_for, abort
+from flask import request
 from flask_cors import CORS
-from config import app, bcrypt,  get_jwt_identity
+# from config import app, bcrypt,  get_jwt_identity
 from config import app, db, request, make_response, api, Resource, jsonify, jwt, create_access_token, jwt_required, current_user, get_jwt, set_access_cookies
 from models import db, User, MultipleOption, CodeChallenge, SubjectiveQuestion, Topic, TokenBlocklist
 import datetime
-import timezone
-from datetime import timedelta
-
+from datetime import timedelta, timezone
 CORS(app)
+
 
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
@@ -33,43 +32,48 @@ def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
     token = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar()
     return token is not None
 
-@app.route('/')
-@jwt_required()
-def home():
-    current_user = get_jwt_identity()
-    print(current_user.username, current_user.email, current_user._password_hash, current_user.id)
-    response = {
-        "Message": "Welcome to my Home Page"
-    }
-    return make_response(response, 200)
+class Home (Resource):
+    @jwt_required()
+    def get(self):
+        print(current_user.username, current_user.email, current_user._password_hash, current_user.id)
+        response = (
+            {
+                "Message": "Welcome to my Home Page"
+            }
+        )
+        return make_response(
+            response,
+            200
+        )
+api.add_resource(Home, "/")
 
+class AddUser(Resource):
+    def post(self):
+        data = request.get_json()
+        username = data.get('username')
+        email = data.get('email')
+        role = data.get('role')
+        password = data.get('password')
 
-@app.route('/adduser', methods=['POST'])
-def add_user():
-    data = request.get_json()
-    username = data.get('username')
-    email = data.get('email')
-    role = data.get('role')
-    password = data.get('password')
+        if not username or not email or not role or not password:
+            return jsonify({"error": "Username, email, role and password are required."}), 400
 
-    if not username or not email or not role or not password:
-        return jsonify({"error": "Username, email, role and password are required."}), 400
+        new_user = User(username=username, email=email, role=role)
+        new_user.password_hash = password
+        db.session.add(new_user)
+        db.session.commit()
+        
+        return make_response({"message": "The user has been created successfully"}, 201)
 
-    new_user = User(username=username, email=email, role=role)
-    new_user.password_hash = password
-    db.session.add(new_user)
-    db.session.commit()
+api.add_resource(AddUser, "/adduser")
 
-    return make_response({"message": "The user has been created successfully"}, 201)
+class LoginUser(Resource):
+    def post(self):
+        data = request.get_json()
 
-
-@app.route('/login', methods=['POST'])
-def login_user():
-    data = request.get_json()
-    new_user = User.query.filter_by(email=data['email']).first()
-
-    if not new_user:
-        return jsonify({"error": "email is incorrect."}), 400
+        new_user = User.query.filter_by(email=data['email']).first()
+        if not new_user:
+            return jsonify({"error": "email is incorrect."}), 400
 
         if new_user.validates(data['password']):
             given_token = create_access_token(identity=new_user.username)
@@ -97,14 +101,13 @@ class LogoutUser(Resource):
         token = TokenBlocklist(jti=jti, created_at=now)
         db.session.add(token)
         db.session.commit()
-        return make_response(\
+        return make_response(
             jsonify(
                 {"message": "Successfully logged out"}
             ),
             200
         )
 api.add_resource(LogoutUser, "/logout")
-
 
 @app.route('/questions/all')
 def all_questions():
