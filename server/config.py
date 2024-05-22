@@ -7,12 +7,15 @@ from flask_bcrypt import Bcrypt
 import os
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, current_user, get_jwt, set_access_cookies
 import datetime
+from dotenv import load_dotenv
+load_dotenv()
 
 app=Flask(__name__)
 metadata = MetaData()
 db = SQLAlchemy(metadata=metadata)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hiresynth.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI')
 app.config['JWT_SECRET_KEY'] = "381f65bc3f98ae33c4e3ae5b0dfe21a0fbe616800031657af772a6d961723ab9"
 app.config['SQLALCHEMY_TRACK_MODIFICATONS'] = False
 app.config['JWT_COOKIE_SECURE'] = False

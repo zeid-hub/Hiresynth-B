@@ -14,8 +14,9 @@ ipdb = "*"
 flask-bcrypt = "*"
 sqlalchemy = "*"
 flask-jwt-extended = "*"
-flask-migrate = "*"
-
+gunicorn = "*"
+python-dotenv = "*"
+psycopg2-binary = "*"
 [dev-packages]
 
 [requires]
