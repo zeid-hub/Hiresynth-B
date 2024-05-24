@@ -251,7 +251,7 @@ def populate_CodeChallenge_from_api(challenge_ids_or_slugs, correct_answers):
         users = User.query.all()
 
         # Fixed list of languages
-        fixed_languages = ['javascript', 'python', 'ruby']
+        fixed_languages = ["Javascript"]
         languages_json = json.dumps(fixed_languages)
 
         for challenge_id_or_slug in challenge_ids_or_slugs:
@@ -260,8 +260,7 @@ def populate_CodeChallenge_from_api(challenge_ids_or_slugs, correct_answers):
             
             if response.status_code == 200:
                 data = response.json()
-                
-                # Randomly select a user from the list of users (not used in this example)
+               
                 user = random.choice(users)
                 
                 # Extracting data from API response

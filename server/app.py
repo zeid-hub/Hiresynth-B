@@ -66,6 +66,24 @@ class AddUser(Resource):
 
 api.add_resource(AddUser, "/adduser")
 
+
+class GetAllUsers(Resource):
+    def get(self):
+        users = User.query.all()
+        user_list = [
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role
+            }
+            for user in users
+        ]
+        response = make_response(jsonify(user_list), 200)
+        return response
+
+api.add_resource(GetAllUsers, "/getallusers")
+
 class LoginUser(Resource):
     def post(self):
         data = request.get_json()
@@ -108,23 +126,41 @@ class LogoutUser(Resource):
         )
 api.add_resource(LogoutUser, "/logout")
 
+# API endpoint to update password
+@app.route('/update_password', methods=['POST'])
+def update_password():
+    data = request.get_json()
+
+    old_password = data.get('oldPassword')
+    new_password = data.get('newPassword')
+    username = data.get('username')  # Use username instead of userId
+
+    user = User.query.filter_by(username=username).first()  # Retrieve user by username
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    if not user.validates(old_password):
+        return jsonify({'message': 'Old password is incorrect'}), 400
+
+    user.password_hash = new_password
+
+    db.session.commit()
+
+    return jsonify({'message': 'Password updated successfully'}), 200
+
 @app.route('/questions/all')
 def all_questions():
     all_questions = []
 
-    # Fetch subjective questions
     subjective_questions = SubjectiveQuestion.query.all()
     all_questions.extend(subjective_questions)
 
-    # Fetch multiple-choice questions
     multiple_choice_questions = MultipleOption.query.all()
     all_questions.extend(multiple_choice_questions)
 
-    # Fetch code challenges
     code_challenges = CodeChallenge.query.all()
     all_questions.extend(code_challenges)
 
-    # Serialize the questions and return
     serialized_questions = []
     for question in all_questions:
         if isinstance(question, SubjectiveQuestion):
@@ -151,23 +187,18 @@ def all_questions():
 
 @app.route('/code_challenges', methods=['GET'])
 def get_code_challenges():
-    # Query all code challenges from the database
     challenges = CodeChallenge.query.all()
-    # Convert the query results to a list of dictionaries
     challenges_list = [
         {
             'id': challenge.id,
             'title': challenge.title,
             'description': challenge.description,
-            'question_type': challenge.question_type,
-            'time_limit': challenge.time_limit,
-            'languages': challenge.languages
+            'languages': challenge.languages,
+            'correct_answer': challenge.correct_answer,
         } for challenge in challenges
     ]
-    # Return the list as a JSON response
     return jsonify(challenges_list)
 
-# Route to retrieve a specific code challenge by ID
 @app.route('/code_challenges/<int:id>', methods=['GET'])
 def get_code_challenge(id):
     challenge = CodeChallenge.query.get_or_404(id)
@@ -175,21 +206,17 @@ def get_code_challenge(id):
         'id': challenge.id,
         'title': challenge.title,
         'description': challenge.description,
-        'question_type': challenge.question_type,
-        'time_limit': challenge.time_limit,
         'languages': challenge.languages
     })
 
-# Route to create a new code challenge
 @app.route('/code_challenges', methods=['POST'])
 def create_code_challenge():
     data = request.get_json()
     new_challenge = CodeChallenge(
         title=data['title'],
         description=data['description'],
-        question_type=data['question_type'],
-        time_limit=data.get('time_limit'),
-        languages=data['languages']
+        languages=data['languages'],
+        correct_answer=data['correct_answer']
     )
     db.session.add(new_challenge)
     db.session.commit()
@@ -197,12 +224,9 @@ def create_code_challenge():
         'id': new_challenge.id,
         'title': new_challenge.title,
         'description': new_challenge.description,
-        'question_type': new_challenge.question_type,
-        'time_limit': new_challenge.time_limit,
         'languages': new_challenge.languages
     }), 201
 
-# Route to update a specific code challenge by ID
 @app.route('/code_challenges/<int:id>', methods=['PATCH'])
 def update_code_challenge(id):
     challenge = CodeChallenge.query.get_or_404(id)
@@ -211,30 +235,24 @@ def update_code_challenge(id):
         challenge.title = data['title']
     if 'description' in data:
         challenge.description = data['description']
-    if 'question_type' in data:
-        challenge.question_type = data['question_type']
-    if 'time_limit' in data:
-        challenge.time_limit = data['time_limit']
     if 'languages' in data:
         challenge.languages = data['languages']
+    if 'correct_answer' in data:
+        challenge.correct_answer = data['correct_answer']
     db.session.commit()
     return jsonify({
         'id': challenge.id,
         'title': challenge.title,
         'description': challenge.description,
-        'question_type': challenge.question_type,
-        'time_limit': challenge.time_limit,
         'languages': challenge.languages
     })
 
-# Route to delete a specific code challenge by ID
 @app.route('/code_challenges/<int:id>', methods=['DELETE'])
 def delete_code_challenge(id):
     challenge = CodeChallenge.query.get_or_404(id)
     db.session.delete(challenge)
     db.session.commit()
     return jsonify({'message': 'Code challenge deleted successfully'}), 204
-
 
 @app.route('/subjective_questions_per_topic', methods=['GET'])
 def get_subjective_questions_per_topic():
@@ -248,7 +266,6 @@ def get_subjective_questions_per_topic():
             'subjective_questions': []
         }
 
-        # Retrieve all subjective questions for the current topic
         questions = SubjectiveQuestion.query.filter_by(topic_id=topic.id).all()
 
         for question in questions:

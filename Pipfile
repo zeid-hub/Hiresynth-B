@@ -17,6 +17,8 @@ flask-jwt-extended = "*"
 gunicorn = "*"
 python-dotenv = "*"
 psycopg2-binary = "*"
+requests = "*"
+
 [dev-packages]
 
 [requires]
