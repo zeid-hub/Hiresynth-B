@@ -15,8 +15,9 @@ metadata = MetaData()
 db = SQLAlchemy(metadata=metadata)
 
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hiresynth.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI')
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI')
 # app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://hiresynth_database_user:pLLTZ2OZASn2nWI8aKUv1XSVV0Ia9A17@dpg-cp5nlsq1hbls73fiu8sg-a.oregon-postgres.render.com/hiresynth_app_db"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://hiresynth_database_user:pLLTZ2OZASn2nWI8aKUv1XSVV0Ia9A17@dpg-cp5nlsq1hbls73fiu8sg-a.oregon-postgres.render.com/hiresynth_database"
 app.config['JWT_SECRET_KEY'] = "381f65bc3f98ae33c4e3ae5b0dfe21a0fbe616800031657af772a6d961723ab9"
 app.config['SQLALCHEMY_TRACK_MODIFICATONS'] = False
 app.config['JWT_COOKIE_SECURE'] = False
