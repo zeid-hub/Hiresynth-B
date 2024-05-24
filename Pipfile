@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+flask-sqlalchemy = "*"
+sqlalchemy-serializer = "*"
+flask-restful = "*"
+flask-cors = "*"
+faker = "*"
+ipdb = "*"
+flask-bcrypt = "*"
+sqlalchemy = "*"
+flask-jwt-extended = "*"
+gunicorn = "*"
+python-dotenv = "*"
+psycopg2-binary = "*"
+requests = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
