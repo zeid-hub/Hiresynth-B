@@ -17,9 +17,10 @@ class User(db.Model):
     assessments = db.relationship("Assessment", back_populates="user")
     assessment_scores = db.relationship("AssessmentScore", back_populates="user") 
     test_session = db.relationship("TestSession", back_populates="users")
+    code_executions = db.relationship("CodeExecution", back_populates="user")
 
     @hybrid_property
-    def password_hash(self):
+    def password_hash(self): 
         return self._password_hash
 
     @password_hash.setter
@@ -124,12 +125,30 @@ class CodeChallenge(db.Model):
     title = db.Column(db.String(), nullable=False)
     description = db.Column(db.Text, nullable=False)
     languages = db.Column(db.String(), nullable=False)
-    correct_answer = db.Column(db.Text, nullable=False)  
+    correct_answer = db.Column(db.Text, nullable=False)
 
     def __repr__(self):
         return f"<CodeChallenge {self.title}, Correct Answer: {self.correct_answer}, Languages: {self.languages}>"
 
-    
+# Association table for many-to-many relationship between Test and CodeChallenge
+test_code_challenge_association = db.Table(
+    'test_code_challenge_association',
+    db.Column('test_id', db.Integer, db.ForeignKey('tests.id'), primary_key=True),
+    db.Column('code_challenge_id', db.Integer, db.ForeignKey('code_challenges.id'), primary_key=True)
+)
+
+class Test(db.Model):
+    __tablename__ = 'tests'
+
+    id = db.Column(db.Integer, primary_key=True)
+    input_data = db.Column(db.Text, nullable=False)
+    expected_output = db.Column(db.Text, nullable=False)
+    code_challenges = db.relationship('CodeChallenge', 
+                                      secondary=test_code_challenge_association, 
+                                      backref=db.backref('tests', lazy=True))
+
+    def __repr__(self):
+        return f"<Test {self.id}, Input Data: {self.input_data}, Expected Output: {self.expected_output}>"
 class Assessment(db.Model):
     __tablename__ = 'assessments'
 
@@ -143,7 +162,6 @@ class Assessment(db.Model):
     # Relationships
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     user = db.relationship("User", back_populates="assessments")
-    assessment_scores = db.relationship("AssessmentScore", back_populates = "assessment")
     test_session = db.relationship("TestSession", back_populates = "assessments")
 
     questions = db.relationship('Question', secondary='assessment_question', backref='assessments')
@@ -198,13 +216,26 @@ class AssessmentScore(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     score = db.Column(db.Float, nullable=False)
     completion_date = db.Column(db.DateTime, default=datetime.now, nullable=False)
-    assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     # Relationships
-    assessment = db.relationship("Assessment", back_populates="assessment_scores")
     user = db.relationship("User", back_populates="assessment_scores")
 
     
     def __repr__(self):
         return f"<AssessmentScore id={self.id}, score={self.score}, completion_date={self.completion_date}>"
+
+class CodeExecution(db.Model):
+    __tablename__ = 'code_executions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_code = db.Column(db.Text, nullable=False)
+    code_output = db.Column(db.Text, nullable=True)
+    language = db.Column(db.String(), nullable=False)
+    timer = db.Column(db.DateTime, nullable=True, default=datetime.now)
+
+    user = db.relationship('User', back_populates='code_executions')
+
+    def __repr__(self):
+        return f"<CodeExecution id={self.id}, user_id={self.user_id}>"
