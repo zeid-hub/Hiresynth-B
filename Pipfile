@@ -18,6 +18,9 @@ gunicorn = "*"
 python-dotenv = "*"
 psycopg2-binary = "*"
 requests = "*"
+psycopg2 = "*"
+pandas = "*"
+bleach = "*"
 
 [dev-packages]
 
