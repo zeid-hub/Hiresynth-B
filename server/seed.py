@@ -85,7 +85,7 @@ def populate_CodeChallenge_from_api(challenge_ids_or_slugs, correct_answers):
 
 
 if __name__ == '__main__':
-    # Seed users
+    
     seed_users()
 
     correct_answers = {
