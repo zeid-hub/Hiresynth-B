@@ -4,7 +4,6 @@ from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-import os
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, current_user, get_jwt, set_access_cookies
 import datetime
 from dotenv import load_dotenv
