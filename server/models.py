@@ -123,6 +123,20 @@ assessment_question = db.Table('assessment_question',
     db.Column('question_id', db.Integer, db.ForeignKey('questions.id'), primary_key=True)
 )
 
+class CreditCard(db.Model):
+    __tablename__ = 'credit_cards'
+
+    id = db.Column(db.Integer, primary_key=True)
+    card_number = db.Column(db.String(16), nullable=False)  # Assuming a 16-digit card number
+    expiration_date = db.Column(db.String(7), nullable=False)  # Format: MM/YYYY
+    cvv = db.Column(db.String(3), nullable=False)  # Card Verification Value
+    country = db.Column(db.String(), nullable=False)
+    city = db.Column(db.String(), nullable=False)
+    amount_transacted = db.Column(db.Float, default=0.0)  # Amount transacted using this card
+
+    def __repr__(self):
+        return f"<CreditCard {self.card_number}, Expiry: {self.expiration_date}, CVV: {self.cvv}, Amount Transacted: {self.amount_transacted}>"
+
 class Question(db.Model):
     __tablename__ = 'questions'
 
