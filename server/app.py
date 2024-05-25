@@ -507,34 +507,34 @@ class CodeExecutionResource(Resource):
                 return {'message': 'Code execution not found'}, 404
 
     def post(self):
-    data = request.json
+        data = request.json
 
-    user_code = data.get('user_code')
-    language = data.get('language')
-    timer_str = data.get('timer')  # Extract timer as string from request payload
-    code_output = data.get('code_output')  # Extract code_output from request payload
-    
-    if not user_code or not user_code.strip():
-        return {'message': 'User code cannot be empty'}, 400
-    
-    sanitized_user_code = bleach.clean(user_code)
-    
-    # Convert timer string to datetime object
-    try:
-        timer = datetime.strptime(timer_str, "%a, %d %b %Y %H:%M:%S %Z")
-    except ValueError as e:
-        return {'message': f'Error parsing timer string: {str(e)}'}, 400
-    
-    code_execution = CodeExecution(
-        user_code=sanitized_user_code,
-        code_output=code_output,  # Include code_output
-        language=language,
-        timer=timer
-    )
-    db.session.add(code_execution)
-    db.session.commit()
-    
-    return {'message': 'Code submitted successfully'}, 201
+        user_code = data.get('user_code')
+        language = data.get('language')
+        timer_str = data.get('timer')  # Extract timer as string from request payload
+        code_output = data.get('code_output')  # Extract code_output from request payload
+        
+        if not user_code or not user_code.strip():
+            return {'message': 'User code cannot be empty'}, 400
+        
+        sanitized_user_code = bleach.clean(user_code)
+        
+        # Convert timer string to datetime object
+        try:
+            timer = datetime.strptime(timer_str, "%a, %d %b %Y %H:%M:%S %Z")
+        except ValueError as e:
+            return {'message': f'Error parsing timer string: {str(e)}'}, 400
+        
+        code_execution = CodeExecution(
+            user_code=sanitized_user_code,
+            code_output=code_output,  # Include code_output
+            language=language,
+            timer=timer
+        )
+        db.session.add(code_execution)
+        db.session.commit()
+        
+        return {'message': 'Code submitted successfully'}, 201
 
 api.add_resource(CodeExecutionResource, '/code_execution', '/code_execution/<int:code_execution_id>')
 
