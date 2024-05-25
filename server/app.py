@@ -1,6 +1,7 @@
 # from flask_cors import CORS
 from config import app, db, request, make_response, api, Resource, jsonify, jwt, create_access_token, jwt_required, current_user, get_jwt, set_access_cookies
-from models import db, User, MultipleOption, CodeChallenge, SubjectiveQuestion, Topic, TokenBlocklist
+# from models import db, User, MultipleOption, CodeChallenge, SubjectiveQuestion, Topic, TokenBlocklist
+from models import db, User, CodeChallenge, TokenBlocklist
 import datetime
 from datetime import timedelta, timezone
 # CORS(app)
@@ -147,42 +148,42 @@ def update_password():
 
     return jsonify({'message': 'Password updated successfully'}), 200
 
-@app.route('/questions/all')
-def all_questions():
-    all_questions = []
+# @app.route('/questions/all')
+# def all_questions():
+#     all_questions = []
 
-    subjective_questions = SubjectiveQuestion.query.all()
-    all_questions.extend(subjective_questions)
+#     subjective_questions = SubjectiveQuestion.query.all()
+#     all_questions.extend(subjective_questions)
 
-    multiple_choice_questions = MultipleOption.query.all()
-    all_questions.extend(multiple_choice_questions)
+#     # multiple_choice_questions = MultipleOption.query.all()
+#     # all_questions.extend(multiple_choice_questions)
 
-    code_challenges = CodeChallenge.query.all()
-    all_questions.extend(code_challenges)
+#     code_challenges = CodeChallenge.query.all()
+#     all_questions.extend(code_challenges)
 
-    serialized_questions = []
-    for question in all_questions:
-        if isinstance(question, SubjectiveQuestion):
-            serialized_question = {
-                'type': 'subjective',
-                'id': question.id,
-                'question_text': question.question_text
-            }
-        elif isinstance(question, MultipleOption):
-            serialized_question = {
-                'type': 'multiple_choice',
-                'id': question.id,
-                'question_text': question.question_text
-            }
-        elif isinstance(question, CodeChallenge):
-            serialized_question = {
-                'type': 'code_challenge',
-                'id': question.id,
-                'title': question.title
-            }
-        serialized_questions.append(serialized_question)
+#     serialized_questions = []
+#     for question in all_questions:
+#         if isinstance(question, SubjectiveQuestion):
+#             serialized_question = {
+#                 'type': 'subjective',
+#                 'id': question.id,
+#                 'question_text': question.question_text
+#             }
+#         # elif isinstance(question, MultipleOption):
+#         #     serialized_question = {
+#         #         'type': 'multiple_choice',
+#         #         'id': question.id,
+#         #         'question_text': question.question_text
+#         #     }
+#         elif isinstance(question, CodeChallenge):
+#             serialized_question = {
+#                 'type': 'code_challenge',
+#                 'id': question.id,
+#                 'title': question.title
+#             }
+#         serialized_questions.append(serialized_question)
 
-    return jsonify(questions=serialized_questions)
+#     return jsonify(questions=serialized_questions)
 
 @app.route('/code_challenges', methods=['GET'])
 def get_code_challenges():
@@ -253,96 +254,96 @@ def delete_code_challenge(id):
     db.session.commit()
     return jsonify({'message': 'Code challenge deleted successfully'}), 204
 
-@app.route('/subjective_questions_per_topic', methods=['GET'])
-def get_subjective_questions_per_topic():
-    topics = Topic.query.all()
-    topic_subjective_questions = []
+# @app.route('/subjective_questions_per_topic', methods=['GET'])
+# def get_subjective_questions_per_topic():
+#     topics = Topic.query.all()
+#     topic_subjective_questions = []
 
-    for topic in topics:
-        topic_data = {
-            'topic_id': topic.id,
-            'topic_name': topic.name,
-            'subjective_questions': []
-        }
+#     for topic in topics:
+#         topic_data = {
+#             'topic_id': topic.id,
+#             'topic_name': topic.name,
+#             'subjective_questions': []
+#         }
 
-        questions = SubjectiveQuestion.query.filter_by(topic_id=topic.id).all()
+#         questions = SubjectiveQuestion.query.filter_by(topic_id=topic.id).all()
 
-        for question in questions:
-            question_data = {
-                'question_id': question.id,
-                'question_text': question.question_text,
-                'maximum_length': question.maximum_length,
-                'required': question.required
-            }
-            topic_data['subjective_questions'].append(question_data)
+#         for question in questions:
+#             question_data = {
+#                 'question_id': question.id,
+#                 'question_text': question.question_text,
+#                 'maximum_length': question.maximum_length,
+#                 'required': question.required
+#             }
+#             topic_data['subjective_questions'].append(question_data)
 
-        topic_subjective_questions.append(topic_data)
+#         topic_subjective_questions.append(topic_data)
 
-    return jsonify({'topics_with_subjective_questions': topic_subjective_questions})
+#     return jsonify({'topics_with_subjective_questions': topic_subjective_questions})
 
-@app.route('/subjective_questions/<int:topic_id>', methods=['GET'])
-def get_subjective_questions_by_topic(topic_id):
-    topic = Topic.query.get_or_404(topic_id)
-    questions = SubjectiveQuestion.query.filter_by(topic_id=topic.id).all()
+# @app.route('/subjective_questions/<int:topic_id>', methods=['GET'])
+# def get_subjective_questions_by_topic(topic_id):
+#     topic = Topic.query.get_or_404(topic_id)
+#     questions = SubjectiveQuestion.query.filter_by(topic_id=topic.id).all()
 
-    topic_data = {
-        'topic_id': topic.id,
-        'topic_name': topic.name,
-        'subjective_questions': []
-    }
+#     topic_data = {
+#         'topic_id': topic.id,
+#         'topic_name': topic.name,
+#         'subjective_questions': []
+#     }
 
-    for question in questions:
-        question_data = {
-            'question_id': question.id,
-            'question_text': question.question_text,
-            'maximum_length': question.maximum_length,
-            'required': question.required
-        }
-        topic_data['subjective_questions'].append(question_data)
+#     for question in questions:
+#         question_data = {
+#             'question_id': question.id,
+#             'question_text': question.question_text,
+#             'maximum_length': question.maximum_length,
+#             'required': question.required
+#         }
+#         topic_data['subjective_questions'].append(question_data)
 
-    return jsonify(topic_data)
+#     return jsonify(topic_data)
 
-@app.route('/subjective_questions', methods=['POST'])
-def create_subjective_question():
-    data = request.json
-    topic_id = data.get('topic_id')
-    topic = Topic.query.get_or_404(topic_id)
+# @app.route('/subjective_questions', methods=['POST'])
+# def create_subjective_question():
+#     data = request.json
+#     topic_id = data.get('topic_id')
+#     topic = Topic.query.get_or_404(topic_id)
     
-    new_question = SubjectiveQuestion(
-        question_text=data['question_text'],
-        maximum_length=data['maximum_length'],
-        required=data['required'],
-        topic=topic
-    )
+#     new_question = SubjectiveQuestion(
+#         question_text=data['question_text'],
+#         maximum_length=data['maximum_length'],
+#         required=data['required'],
+#         topic=topic
+#     )
     
-    db.session.add(new_question)
-    db.session.commit()
+#     db.session.add(new_question)
+#     db.session.commit()
     
-    return jsonify({'message': 'Subjective question created successfully'}), 201
+#     return jsonify({'message': 'Subjective question created successfully'}), 201
 
-@app.route('/subjective_questions/<int:question_id>', methods=['PATCH'])
-def update_subjective_question(question_id):
-    question = SubjectiveQuestion.query.get_or_404(question_id)
-    data = request.json
+# @app.route('/subjective_questions/<int:question_id>', methods=['PATCH'])
+# def update_subjective_question(question_id):
+#     question = SubjectiveQuestion.query.get_or_404(question_id)
+#     data = request.json
     
-    if 'question_text' in data:
-        question.question_text = data['question_text']
-    if 'maximum_length' in data:
-        question.maximum_length = data['maximum_length']
-    if 'required' in data:
-        question.required = data['required']
+#     if 'question_text' in data:
+#         question.question_text = data['question_text']
+#     if 'maximum_length' in data:
+#         question.maximum_length = data['maximum_length']
+#     if 'required' in data:
+#         question.required = data['required']
     
-    db.session.commit()
+#     db.session.commit()
     
-    return jsonify({'message': 'Subjective question updated successfully'})
+#     return jsonify({'message': 'Subjective question updated successfully'})
 
-@app.route('/subjective_questions/<int:question_id>', methods=['DELETE'])
-def delete_subjective_question(question_id):
-    question = SubjectiveQuestion.query.get_or_404(question_id)
-    db.session.delete(question)
-    db.session.commit()
+# @app.route('/subjective_questions/<int:question_id>', methods=['DELETE'])
+# def delete_subjective_question(question_id):
+#     question = SubjectiveQuestion.query.get_or_404(question_id)
+#     db.session.delete(question)
+#     db.session.commit()
     
-    return jsonify({'message': 'Subjective question deleted successfully'})
+#     return jsonify({'message': 'Subjective question deleted successfully'})
 
 
 if __name__ == '__main__':
