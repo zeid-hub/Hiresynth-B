@@ -19,6 +19,7 @@ python-dotenv = "*"
 psycopg2-binary = "*"
 requests = "*"
 flask-migrate = "*"
+bleach = "*"
 
 [dev-packages]
 
