@@ -64,59 +64,7 @@ class Feedback(db.Model):
 
     def __repr__(self):
         return f"<Feedback(id={self.id}, feedback_text={self.feedback_text})>"
-    
-   
-# class SubjectiveQuestion(db.Model):
-#     __tablename__ = 'subjectivequestions'
 
-#     id = db.Column(db.Integer, primary_key=True)
-#     question_text = db.Column(db.Text, nullable=False)
-#     maximum_length = db.Column(db.Integer)  # Maximum character limit for the response
-#     required = db.Column(db.Boolean, default=True)  # Whether the question is mandatory or optional
-
-#     topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=False)
-#     topic = db.relationship('Topic', backref='subjectivequestions')
-    
-#     def __repr__(self):
-#         return f"<SubjectiveQuestion {self.id}: {self.question_text}>"
-
-# class Topic(db.Model):
-#     __tablename__ = 'topics'
-
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(), nullable=False, unique=True)
-
-#     def __repr__(self):
-#         return f"<Topic {self.name}>"
-
-# class MultipleOption(db.Model):
-#     __tablename__ = 'multiple_questions'
-
-#     id = db.Column(db.Integer, primary_key=True)
-#     question_text = db.Column(db.Text, nullable=False)
-#     correct_option_id = db.Column(db.Integer, db.ForeignKey('options.id'), nullable=True)
-#     topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=False)
-
-#     topic = db.relationship('Topic', backref='multiple_questions')
-#     options = db.relationship('Option', backref='multiple_question', foreign_keys=[correct_option_id])
-
-#     def __repr__(self):
-#         return f"<MultipleQuestion {self.id}: {self.question_text}>"
-
-#     @property
-#     def has_three_options(self):
-#         return len(self.options) == 3
-
-# class Option(db.Model):
-#     __tablename__ = 'options'
-
-#     id = db.Column(db.Integer, primary_key=True)
-#     option_text = db.Column(db.Text, nullable=False)
-#     multiple_question_id = db.Column(db.Integer, db.ForeignKey('multiple_questions.id'), nullable=False)
-
-#     def __repr__(self):
-#         return f"<Option {self.id}: {self.option_text}>"
-    
 class CodeChallenge(db.Model):
     __tablename__ = 'code_challenges'
 
