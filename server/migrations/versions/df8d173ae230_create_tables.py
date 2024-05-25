@@ -1,8 +1,8 @@
-"""Creating questionn table
+"""create tables
 
-Revision ID: fddc4897d8d7
+Revision ID: df8d173ae230
 Revises: 
-Create Date: 2024-05-21 16:18:29.125210
+Create Date: 2024-05-25 18:27:58.550477
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'fddc4897d8d7'
+revision = 'df8d173ae230'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,35 +26,41 @@ def upgrade():
     sa.Column('correct_answer', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('multiple_questions',
+    op.create_table('token_blocklist',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('question_text', sa.Text(), nullable=False),
-    sa.Column('correct_option_id', sa.Integer(), nullable=True),
-    sa.Column('topic_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['correct_option_id'], ['options.id'], ),
-    sa.ForeignKeyConstraint(['topic_id'], ['topics.id'], ),
+    sa.Column('jti', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('options',
+    with op.batch_alter_table('token_blocklist', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_token_blocklist_jti'), ['jti'], unique=False)
+
+    op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('option_text', sa.Text(), nullable=False),
-    sa.Column('multiple_question_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['multiple_question_id'], ['multiple_questions.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('topics',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('username', sa.String(), nullable=False),
+    sa.Column('role', sa.String(), nullable=False),
+    sa.Column('email', sa.String(), nullable=False),
+    sa.Column('_password_hash', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.UniqueConstraint('email'),
+    sa.UniqueConstraint('username')
     )
-    op.create_table('subjectivequestions',
+    op.create_table('assessments',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('question_text', sa.Text(), nullable=False),
-    sa.Column('maximum_length', sa.Integer(), nullable=True),
-    sa.Column('required', sa.Boolean(), nullable=True),
-    sa.Column('topic_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['topic_id'], ['topics.id'], ),
+    sa.Column('title', sa.String(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=False),
+    sa.Column('type', sa.String(length=50), nullable=False),
+    sa.Column('time_limit', sa.Integer(), nullable=True),
+    sa.Column('status', sa.String(length=50), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('feedbacks',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('feedback_text', sa.String(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('assessment_scores',
@@ -63,6 +69,16 @@ def upgrade():
     sa.Column('completion_date', sa.DateTime(), nullable=False),
     sa.Column('assessment_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['assessment_id'], ['assessments.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('invitations',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('status', sa.String(length=50), nullable=True),
+    sa.Column('time', sa.DateTime(), nullable=True),
+    sa.Column('assessment_id', sa.Integer(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['assessment_id'], ['assessments.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -103,10 +119,14 @@ def downgrade():
     op.drop_table('assessment_question')
     op.drop_table('test_sessions')
     op.drop_table('questions')
+    op.drop_table('invitations')
     op.drop_table('assessment_scores')
-    op.drop_table('subjectivequestions')
-    op.drop_table('topics')
-    op.drop_table('options')
-    op.drop_table('multiple_questions')
+    op.drop_table('feedbacks')
+    op.drop_table('assessments')
+    op.drop_table('users')
+    with op.batch_alter_table('token_blocklist', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_token_blocklist_jti'))
+
+    op.drop_table('token_blocklist')
     op.drop_table('code_challenges')
     # ### end Alembic commands ###
