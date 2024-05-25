@@ -247,82 +247,48 @@ def populate_CodeChallenge_from_api(challenge_ids_or_slugs, correct_answers):
         CodeChallenge.query.delete()
         db.session.commit()
 
-        # Retrieve all users from the database
-        users = User.query.all()
-
         # Fixed list of languages
-        fixed_languages = ["Javascript"]
-        languages_json = json.dumps(fixed_languages)
+        fixed_languages = ['python', 'javascript', 'ruby']  # Fixed the order to match correct_answers keys
 
-        for challenge_id_or_slug in challenge_ids_or_slugs:
-            api_url = f"https://www.codewars.com/api/v1/code-challenges/{challenge_id_or_slug}"
-            response = requests.get(api_url)
-            
-            if response.status_code == 200:
-                data = response.json()
-               
-                user = random.choice(users)
-                
-                # Extracting data from API response
-                title = data['name']
-                description = data['description']
-                
-                # Retrieve the correct answer from the dictionary if it exists
-                if title in correct_answers:
-                    correct_answer = json.dumps(correct_answers[title])
-                else:
-                    correct_answer = json.dumps(data.get('example_solutions', [''])[0])  # Fallback if not in dictionary
+        for language in fixed_languages:
+            for challenge_id_or_slug in challenge_ids_or_slugs:
+                api_url = f"https://www.codewars.com/api/v1/code-challenges/{challenge_id_or_slug}"
+                response = requests.get(api_url)
 
-                # Create assessment
-                challenge = CodeChallenge(
-                    title=title,
-                    description=description,
-                    languages=languages_json,
-                    correct_answer=correct_answer
-                )
-                
-                db.session.add(challenge)
-                db.session.commit()
-                print(f"CodeChallenge for challenge '{challenge_id_or_slug}' populated successfully.")
-            else:
-                print(f"Failed to retrieve data for challenge '{challenge_id_or_slug}' from the API. Status code: {response.status_code}")
+                if response.status_code == 200:
+                    data = response.json()
+                    # Extracting data from API response
+                    title = data['name']
+                    description = data['description']
 
-def seed_sample_user_codes():
-    with app.app_context():
-        # Clear existing code storage data
-        CodeExecution.query.delete()
-        db.session.commit()
-        
-        # Query user objects from the database
-        recruiters = User.query.filter_by(role='Recruiter').all()
-        interviewees = User.query.filter_by(role='Interviewee').all()
-        
-        if not recruiters:
-            print("Error: No Recruiters found.")
-            return
-        if not interviewees:
-            print("Error: No Interviewees found.")
-            return
+                    # Retrieve the correct answer from the correct_answers dictionary
+                    correct_answer = ""
+                    if title in correct_answers:
+                        if language in correct_answers[title]:
+                            correct_answer = json.dumps(correct_answers[title][language])
+                        else:
+                            print(f"Warning: No answer found for challenge '{title}' in language '{language}'.")
+                    else:
+                        print(f"Warning: Challenge '{title}' not found in 'correct_answers' dictionary.")
 
-        user_codes = [
-            "def add(a, b):\n    return a + b",
-            "def subtract(a, b):\n    return a - b",
-            "def multiply(a, b):\n    return a * b",
-            "def divide(a, b):\n    return a / b"
-        ]
+                    # Create CodeChallenge instance and add to session
+                    challenge = CodeChallenge(
+                        title=title,
+                        description=description,
+                        languages=json.dumps([language]),  # Single language
+                        correct_answer=correct_answer
+                    )
 
-        # Assign each code to a different recruiter and interviewee
-        for i, recruiter in enumerate(recruiters):
-            code_execution_recruiter = CodeExecution(user_id=recruiter.id, user_code=user_codes[i % len(user_codes)], language="python")
-            db.session.add(code_execution_recruiter)
+                    db.session.add(challenge)
 
-        for i, interviewee in enumerate(interviewees):
-            code_execution_interviewee = CodeExecution(user_id=interviewee.id, user_code=user_codes[(i + len(recruiters)) % len(user_codes)], language="python")
-            db.session.add(code_execution_interviewee)
+            # Commit the session after each language iteration
+            db.session.commit()
 
-        db.session.commit()
+        print("CodeChallenges seeded successfully.")
 
-        print("Sample user codes seeded successfully.")
+
+
+
 if __name__ == '__main__':
     # Seed users
     seed_users()
@@ -337,19 +303,59 @@ if __name__ == '__main__':
     seed_multiple_option_questions()
 
     correct_answers = {
-    "Does my number look big in this?": [True, True, False, False],
-    "Sort the Gift Code": ["abcdef", "kpqsuvy", "abcdefghijklmnopqrstuvwxyz"],
-    "Don't give me five!": [8, 12],
-    "Even or Odd": ["Odd", "Even", "Odd", "Even", "Even"],
-    "Who likes it?": ["no one likes this", "Peter likes this", "Jacob and Alex like this", "Max, John and Mark like this", "Alex, Jacob and 2 others like this"],
-    "Allocating Hotel Rooms": [[1, 2, 1], [1, 2, 1, 2], [1, 2, 2, 3, 2], [1, 2, 2, 3, 4, 1, 3, 2], [4, 1, 5, 1, 2, 4, 2, 3, 3, 3], None],
-    "Reversed Strings": ['dlrow', 'olleh', '', 'h'],
-    "Shortest steps to a number": [0, 4, 4, 9],
-    "Bit Counting": [0, 1, 3, 2, 2],
-    "Persistent Bugger.": [3, 0, 2, 4]
+    "Does my number look big in this?": {
+        "python": ["true", "true", "false", "false"],
+        "javascript": ["true", "true", "false", "false"],
+        "ruby": ["true", "true", "false", "false"]
+    },
+    "Sort the Gift Code": {
+        "python": ["abcdef", "kpqsuvy", "abcdefghijklmnopqrstuvwxyz"],
+        "javascript": ["abcdef", "kpqsuvy", "abcdefghijklmnopqrstuvwxyz"],
+        "ruby": ["abcdef", "kpqsuvy", "abcdefghijklmnopqrstuvwxyz"]
+    },
+    "Don't give me five!": {
+        "python": [8, 12],
+        "javascript": [8, 12],
+        "ruby": [8, 12]
+    },
+    "Even or Odd": {
+        "python": ["Odd", "Even", "Odd", "Even", "Even"],
+        "javascript": ["Odd", "Even", "Odd", "Even", "Even"],
+        "ruby": ["Odd", "Even", "Odd", "Even", "Even"]
+    },
+    "Who likes it?": {
+        "python": ["no one likes this", "Peter likes this", "Jacob and Alex like this", "Max, John and Mark like this", "Alex, Jacob and 2 others like this"],
+        "javascript": ["no one likes this", "Peter likes this", "Jacob and Alex like this", "Max, John and Mark like this", "Alex, Jacob and 2 others like this"],
+        "ruby": ["no one likes this", "Peter likes this", "Jacob and Alex like this", "Max, John and Mark like this", "Alex, Jacob and 2 others like this"]
+    },
+    "Allocating Hotel Rooms": {
+        "python": [[1, 2, 1], [1, 2, 1, 2], [1, 2, 2, 3, 2], [1, 2, 2, 3, 4, 1, 3, 2], [4, 1, 5, 1, 2, 4, 2, 3, 3, 3], "None"],
+        "javascript": [[1, 2, 1], [1, 2, 1, 2], [1, 2, 2, 3, 2], [1, 2, 2, 3, 4, 1, 3, 2], [4, 1, 5, 1, 2, 4, 2, 3, 3, 3], "null"],
+        "ruby": [[1, 2, 1], [1, 2, 1, 2], [1, 2, 2, 3, 2], [1, 2, 2, 3, 4, 1, 3, 2], [4, 1, 5, 1, 2, 4, 2, 3, 3, 3], "nil"]
+    },
+    "Reversed Strings": {
+        "python": ['dlrow', 'olleh', '', 'h'],
+        "javascript": ['dlrow', 'olleh', '', 'h'],
+        "ruby": ['dlrow', 'olleh', '', 'h']
+    },
+    "Shortest steps to a number": {
+        "python": [0, 4, 4, 9],
+        "javascript": [0, 4, 4, 9],
+        "ruby": [0, 4, 4, 9]
+    },
+    "Bit Counting": {
+        "python": [0, 1, 3, 2, 2],
+        "javascript": [0, 1, 3, 2, 2],
+        "ruby": [0, 1, 3, 2, 2]
+    },
+    "Persistent Bugger.": {
+        "python": [3, 0, 2, 4],
+        "javascript": [3, 0, 2, 4],
+        "ruby": [3, 0, 2, 4]
     }
+}
 
     # Seed assessments from API
     populate_CodeChallenge_from_api(["does-my-number-look-big-in-this", "sort-the-gift-code", "dont-give-me-five", "even-or-odd", "who-likes-it", "allocating-hotel-rooms", "reversed-strings", "shortest-steps-to-a-number", "bit-counting", "persistent-bugger"], correct_answers)
 
-    seed_sample_user_codes()
+    # seed_sample_user_codes()
