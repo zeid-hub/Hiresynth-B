@@ -1,10 +1,9 @@
-# from flask_cors import CORS
 from config import app, db, request, make_response, api, Resource, jsonify, jwt, create_access_token, jwt_required, current_user, get_jwt, set_access_cookies
-# from models import db, User, MultipleOption, CodeChallenge, SubjectiveQuestion, Topic, TokenBlocklist
-from models import db, User, CodeChallenge, TokenBlocklist
+from models import db, User, CodeChallenge, TokenBlocklist, CodeExecution
 import datetime
 from datetime import timedelta, timezone
-# CORS(app)
+import subprocess
+import bleach
 
 
 @jwt.user_lookup_loader
@@ -126,7 +125,7 @@ class LogoutUser(Resource):
         )
 api.add_resource(LogoutUser, "/logout")
 
-# API endpoint to update password
+
 @app.route('/update_password', methods=['POST'])
 def update_password():
     data = request.get_json()
@@ -148,43 +147,7 @@ def update_password():
 
     return jsonify({'message': 'Password updated successfully'}), 200
 
-# @app.route('/questions/all')
-# def all_questions():
-#     all_questions = []
-
-#     subjective_questions = SubjectiveQuestion.query.all()
-#     all_questions.extend(subjective_questions)
-
-#     # multiple_choice_questions = MultipleOption.query.all()
-#     # all_questions.extend(multiple_choice_questions)
-
-#     code_challenges = CodeChallenge.query.all()
-#     all_questions.extend(code_challenges)
-
-#     serialized_questions = []
-#     for question in all_questions:
-#         if isinstance(question, SubjectiveQuestion):
-#             serialized_question = {
-#                 'type': 'subjective',
-#                 'id': question.id,
-#                 'question_text': question.question_text
-#             }
-#         # elif isinstance(question, MultipleOption):
-#         #     serialized_question = {
-#         #         'type': 'multiple_choice',
-#         #         'id': question.id,
-#         #         'question_text': question.question_text
-#         #     }
-#         elif isinstance(question, CodeChallenge):
-#             serialized_question = {
-#                 'type': 'code_challenge',
-#                 'id': question.id,
-#                 'title': question.title
-#             }
-#         serialized_questions.append(serialized_question)
-
-#     return jsonify(questions=serialized_questions)
-
+    
 @app.route('/code_challenges', methods=['GET'])
 def get_code_challenges():
     challenges = CodeChallenge.query.all()
@@ -254,97 +217,195 @@ def delete_code_challenge(id):
     db.session.commit()
     return jsonify({'message': 'Code challenge deleted successfully'}), 204
 
-# @app.route('/subjective_questions_per_topic', methods=['GET'])
-# def get_subjective_questions_per_topic():
-#     topics = Topic.query.all()
-#     topic_subjective_questions = []
+class Execution(Resource):
+    def post(self):
+        payload = request.json
+        question_title = payload.get('question_title')
+        language = payload.get('language')
+        user_code = payload.get('code', "")
+        interviewee_id = payload.get('user_id')
 
-#     for topic in topics:
-#         topic_data = {
-#             'topic_id': topic.id,
-#             'topic_name': topic.name,
-#             'subjective_questions': []
-#         }
+        # Fetch the code challenge based on the question title
+        code_challenge = CodeChallenge.query.filter_by(title=question_title).first()
 
-#         questions = SubjectiveQuestion.query.filter_by(topic_id=topic.id).all()
+        # Initialize a dictionary to store results for the question
+        question_results = {}
 
-#         for question in questions:
-#             question_data = {
-#                 'question_id': question.id,
-#                 'question_text': question.question_text,
-#                 'maximum_length': question.maximum_length,
-#                 'required': question.required
-#             }
-#             topic_data['subjective_questions'].append(question_data)
+        if code_challenge:
+            # Retrieve the expected outputs from the code challenge
+            expected_outputs = code_challenge.correct_answer
 
-#         topic_subjective_questions.append(topic_data)
+            # Execute the user code against the code challenge
+            output = self.execute_code(language, user_code)
 
-#     return jsonify({'topics_with_subjective_questions': topic_subjective_questions})
+            # Check if the actual output matches any of the expected outputs
+            passed = output in expected_outputs
 
-# @app.route('/subjective_questions/<int:topic_id>', methods=['GET'])
-# def get_subjective_questions_by_topic(topic_id):
-#     topic = Topic.query.get_or_404(topic_id)
-#     questions = SubjectiveQuestion.query.filter_by(topic_id=topic.id).all()
+            # Generate error message if the answer is incorrect
+            error_message = None
+            if not passed:
+                error_message = f"Incorrect answer: Expected one of {expected_outputs}, but got {output}."
+                
+            # Append the question result to the question results list
+            question_results[question_title] = [{
+                'expected_output': expected_outputs,
+                'result': output,
+                'passed': passed,
+                'error_message': error_message
+            }]
 
-#     topic_data = {
-#         'topic_id': topic.id,
-#         'topic_name': topic.name,
-#         'subjective_questions': []
-#     }
+            # Calculate overall score
+            overall_score = 1 if passed else 0
 
-#     for question in questions:
-#         question_data = {
-#             'question_id': question.id,
-#             'question_text': question.question_text,
-#             'maximum_length': question.maximum_length,
-#             'required': question.required
-#         }
-#         topic_data['subjective_questions'].append(question_data)
+            # Store the assessment score in the database associated with the interviewee
+            assessment_score = AssessmentScore(score=overall_score, user_id=interviewee_id)
+            db.session.add(assessment_score)
+            db.session.commit()
 
-#     return jsonify(topic_data)
+            # Send the results along with the assessment score to the frontend
+            return make_response(jsonify({'results': question_results, 'assessment_score': overall_score}), 200)
+        else:
+            return {'message': 'Code challenge not found'}, 404
 
-# @app.route('/subjective_questions', methods=['POST'])
-# def create_subjective_question():
-#     data = request.json
-#     topic_id = data.get('topic_id')
-#     topic = Topic.query.get_or_404(topic_id)
-    
-#     new_question = SubjectiveQuestion(
-#         question_text=data['question_text'],
-#         maximum_length=data['maximum_length'],
-#         required=data['required'],
-#         topic=topic
-#     )
-    
-#     db.session.add(new_question)
-#     db.session.commit()
-    
-#     return jsonify({'message': 'Subjective question created successfully'}), 201
+    def execute_code(self, language, user_code):
+        try:
+            if language.lower() == 'python':
+                exec_code = f"""
+import json
 
-# @app.route('/subjective_questions/<int:question_id>', methods=['PATCH'])
-# def update_subjective_question(question_id):
-#     question = SubjectiveQuestion.query.get_or_404(question_id)
-#     data = request.json
-    
-#     if 'question_text' in data:
-#         question.question_text = data['question_text']
-#     if 'maximum_length' in data:
-#         question.maximum_length = data['maximum_length']
-#     if 'required' in data:
-#         question.required = data['required']
-    
-#     db.session.commit()
-    
-#     return jsonify({'message': 'Subjective question updated successfully'})
+def run_user_code():
+    {user_code}
+    function_name = [name for name in globals() if callable(globals()[name]) and name not in dir(__builtins__)]
+    if function_name:
+        result = globals()[function_name[0]]()
+        print(result)
 
-# @app.route('/subjective_questions/<int:question_id>', methods=['DELETE'])
-# def delete_subjective_question(question_id):
-#     question = SubjectiveQuestion.query.get_or_404(question_id)
-#     db.session.delete(question)
-#     db.session.commit()
-    
-#     return jsonify({'message': 'Subjective question deleted successfully'})
+run_user_code()
+"""
+                result = subprocess.run(
+                    ['python', '-c', exec_code],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+            elif language.lower() == 'ruby':
+                exec_code = f"""
+def run_user_code()
+    {user_code}
+    function_name = local_variables.select {{ |name| eval(name.to_s).is_a?(Method) }}.first
+    if function_name
+        result = send(function_name)
+        puts result
+    end
+end
 
+run_user_code()
+"""
+                result = subprocess.run(
+                    ['ruby', '-e', exec_code],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+            elif language.lower() == 'javascript':
+                exec_code = f"""
+function runUserCode() {{
+    {user_code}
+    let functionName = Object.keys(this).find(key => typeof this[key] === 'function' && key !== 'runUserCode');
+    if (functionName) {{
+        let result = this[functionName]();
+        if (typeof result !== 'undefined') {{
+            console.log(result);
+        }}
+    }}
+}}
+runUserCode();
+"""
+                result = subprocess.run(
+                    ['node', '-e', exec_code],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+            else:
+                return "Unsupported language."
+
+            return result.stdout.strip()
+        except subprocess.TimeoutExpired:
+            return "Code execution timed out."
+        except Exception as e:
+            return f"Error during code execution: {e}"
+
+    def calculate_overall_score(self, question_results):
+        # Calculate the overall score based on question results
+        total_tests = len(question_results)
+        total_passed = sum(result['passed'] for result in question_results)
+
+        overall_score = total_passed / total_tests if total_tests > 0 else 0
+        return overall_score
+
+api.add_resource(Execution, '/execute_code')
+
+class CodeExecutionResource(Resource):
+    def get(self, code_execution_id=None):
+        if code_execution_id is None:
+            # Retrieve all code executions
+            code_executions = CodeExecution.query.all()
+            code_execution_list = [
+                {
+                    "id": code_execution.id,
+                    "user_code": code_execution.user_code,
+                    "code_output": code_execution.code_output,
+                    "language": code_execution.language,
+                    "timer": code_execution.timer.strftime('%Y-%m-%d %H:%M:%S')  # Format datetime to string
+                }
+                for code_execution in code_executions
+            ]
+            return make_response(jsonify(code_execution_list), 200)
+        else:
+            # Retrieve a specific code execution by ID
+            code_execution = CodeExecution.query.filter_by(id=code_execution_id).first()
+            if code_execution:
+                return {
+                    'user_code': code_execution.user_code,
+                    'code_output': code_execution.code_output,
+                    'language': code_execution.language,
+                    'timer': code_execution.timer.strftime('%Y-%m-%d %H:%M:%S')  # Format datetime to string
+                }, 200
+            else:
+                return {'message': 'Code execution not found'}, 404
+
+    def post(self):
+        data = request.json
+
+        user_code = data.get('user_code')
+        language = data.get('language')
+        timer_str = data.get('timer')  # Extract timer as string from request payload
+        user_id = data.get('user_id')
+        
+        if not user_code or not user_code.strip():
+            return {'message': 'User code cannot be empty'}, 400
+        
+        sanitized_user_code = bleach.clean(user_code)
+        
+        # Convert timer string to datetime object
+        try:
+            timer = datetime.strptime(timer_str, "%a, %d %b %Y %H:%M:%S %Z")
+        except ValueError as e:
+            return {'message': f'Error parsing timer string: {str(e)}'}, 400
+        
+        code_execution = CodeExecution(
+            user_code=sanitized_user_code,
+            language=language,
+            timer=timer,
+            user_id=user_id
+        )
+        db.session.add(code_execution)
+        db.session.commit()
+        
+        return {'message': 'Code submitted successfully'}, 201
+
+api.add_resource(CodeExecutionResource, '/code_execution', '/code_execution/<int:code_execution_id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)

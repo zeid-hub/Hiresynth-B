@@ -17,6 +17,7 @@ class User(db.Model):
     assessments = db.relationship("Assessment", back_populates="user")
     assessment_scores = db.relationship("AssessmentScore", back_populates="user") 
     test_session = db.relationship("TestSession", back_populates="users")
+    code_executions = db.relationship("CodeExecution", back_populates="user")
 
     @hybrid_property
     def password_hash(self):
@@ -156,3 +157,20 @@ class AssessmentScore(db.Model):
     
     def __repr__(self):
         return f"<AssessmentScore id={self.id}, score={self.score}, completion_date={self.completion_date}>"
+
+
+
+class CodeExecution(db.Model):
+    __tablename__ = 'code_executions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_code = db.Column(db.Text, nullable=False)
+    code_output = db.Column(db.Text, nullable=True)
+    language = db.Column(db.String(), nullable=False)
+    timer = db.Column(db.DateTime, nullable=True, default=datetime.now)
+
+    user = db.relationship('User', back_populates='code_executions')
+
+    def __repr__(self):
+        return f"<CodeExecution id={self.id}, user_id={self.user_id}>"
