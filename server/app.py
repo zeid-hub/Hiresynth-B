@@ -2,7 +2,7 @@ from flask import request
 from flask_cors import CORS
 # from config import app, bcrypt,  get_jwt_identity
 from config import app, db, request, make_response, api, Resource, jsonify, jwt, create_access_token, jwt_required, current_user, get_jwt, set_access_cookies
-from models import db, User, MultipleOption, CodeChallenge, SubjectiveQuestion, Topic, TokenBlocklist
+from models import db, User, MultipleOption, CodeChallenge, SubjectiveQuestion, Topic, TokenBlocklist, CreditCard
 import datetime
 from datetime import timedelta, timezone
 CORS(app)
@@ -329,6 +329,60 @@ def delete_subjective_question(question_id):
     
     return jsonify({'message': 'Subjective question deleted successfully'})
 
+# Route to get all credit cards
+@app.route('/credit_cards', methods=['GET'])
+def get_credit_cards():
+    # Retrieve all credit cards from the database
+    credit_cards = CreditCard.query.all()
+    # Serialize the credit cards to JSON
+    credit_cards_json = [
+        {
+            'id': card.id,
+            'card_number': card.card_number,
+            'expiration_date': card.expiration_date,
+            'cvv': card.cvv,
+            'country': card.country,
+            'city': card.city,
+            'amount_transacted': card.amount_transacted
+        } for card in credit_cards
+    ]
+    return jsonify(credit_cards_json), 200
+
+# Route to add a new credit card
+@app.route('/credit_cards', methods=['POST'])
+def add_credit_card():
+    # Extract data from the request
+    data = request.json
+    card_number = data.get('card_number')
+    expiration_date = data.get('expiration_date')
+    cvv = data.get('cvv')
+    country = data.get('country')
+    city = data.get('city')
+    amount_transacted = data.get('amount_transacted', 0.0)  # Default to 0.0 if not provided
+
+    # Create a new credit card instance
+    new_card = CreditCard(
+        card_number=card_number,
+        expiration_date=expiration_date,
+        cvv=cvv,
+        country=country,
+        city=city,
+        amount_transacted=amount_transacted
+    )
+
+    # Add the new credit card to the database
+    db.session.add(new_card)
+    db.session.commit()
+
+    return jsonify({
+        'id': new_card.id,
+        'card_number': new_card.card_number,
+        'expiration_date': new_card.expiration_date,
+        'cvv': new_card.cvv,
+        'country': new_card.country,
+        'city': new_card.city,
+        'amount_transacted': new_card.amount_transacted
+    }), 201
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
