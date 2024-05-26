@@ -78,6 +78,20 @@ class CodeChallenge(db.Model):
     def __repr__(self):
         return f"<CodeChallenge {self.title}, Correct Answer: {self.correct_answer}, Languages: {self.languages}>"
 
+    def check_answer(self, code_output):
+        """
+        Check if the provided code_output matches the correct_answer.
+
+        Args:
+            code_output (str): The code output to check.
+
+        Returns:
+            int: 100 if correct, 0 otherwise.
+        """
+        if self.correct_answer == code_output:
+            return 100
+        else:
+            return 0
     
 class Assessment(db.Model):
     __tablename__ = 'assessments'
