@@ -168,7 +168,7 @@ class CodeExecution(db.Model):
     user_code = db.Column(db.Text, nullable=False)
     code_output = db.Column(db.Text, nullable=True)
     language = db.Column(db.String(), nullable=False)
-    timer = db.Column(db.DateTime, nullable=True, default=datetime.now)
+    timer = db.Column(db.Integer, nullable=True)
 
     user = db.relationship('User', back_populates='code_executions')
 
