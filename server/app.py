@@ -458,21 +458,21 @@ def add_credit_card():
     }), 201
 
 # POST route to submit code result
-@app.route('/code_results', methods=['POST'])
-def submit_code_result():
-    data = request.json
-    user_code = data.get('user_code')
-    code_output = data.get('code_output')
-    language = data.get('language')
-    question = data.get('question')  # Include question from the request data
+# @app.route('/code_results', methods=['POST'])
+# def submit_code_result():
+#     data = request.json
+#     user_code = data.get('user_code')
+#     code_output = data.get('code_output')
+#     language = data.get('language')
+#     question = data.get('question')  # Include question from the request data
 
-    # Validate data if necessary
+#     # Validate data if necessary
 
-    code_result = CodeResult(user_code=user_code, code_output=code_output, language=language, question=question)
-    db.session.add(code_result)
-    db.session.commit()
+#     code_result = CodeResult(user_code=user_code, code_output=code_output, language=language, question=question)
+#     db.session.add(code_result)
+#     db.session.commit()
 
-    return jsonify({'message': 'Code result saved successfully'}), 201
+#     return jsonify({'message': 'Code result saved successfully'}), 201
 
 # GET route to retrieve all code results
 @app.route('/code_results', methods=['GET'])
@@ -489,6 +489,36 @@ def get_all_code_results():
         for code_result in code_results
     ]
     return jsonify(code_results_list), 200
+
+@app.route('/code_results', methods=['POST'])
+def submit_code_result():
+    data = request.json
+    user_code = data.get('user_code')
+    code_output = data.get('code_output')
+    language = data.get('language')
+    question = data.get('question')  # Include question from the request data
+
+    # Validate data if necessary
+
+    # Fetch the corresponding code challenge
+    code_challenge = CodeChallenge.query.filter_by(description=question).first()
+
+    # Check the answer against the code challenge
+    score = code_challenge.check_answer(code_output)
+
+    # Save the code result to the database
+    code_result = CodeResult(user_code=user_code, code_output=code_output, language=language, question=question)
+    db.session.add(code_result)
+    db.session.commit()
+
+    # Determine pass or fail based on the score
+    if score == 100:
+        message = 'Congratulations! You passed the challenge.'
+    else:
+        message = 'Sorry, you failed the challenge.'
+
+    return jsonify({'message': message, 'score': score}), 201
+
     
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
