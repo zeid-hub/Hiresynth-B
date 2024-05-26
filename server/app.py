@@ -378,66 +378,36 @@ class CodeExecutionResource(Resource):
             else:
                 return {'message': 'Code execution not found'}, 404
 
-    # def post(self):
-    #     data = request.json
-
-    #     user_code = data.get('user_code')
-    #     language = data.get('language')
-    #     timer_str = data.get('timer')  # Extract timer as string from request payload
-    #     code_output = data.get('code_output')  # Extract code_output from request payload
-        
-    #     if not user_code or not user_code.strip():
-    #         return {'message': 'User code cannot be empty'}, 400
-        
-    #     sanitized_user_code = bleach.clean(user_code)
-        
-    #     # Convert timer string to datetime object
-    #     try:
-    #         timer = datetime.strptime(timer_str, "%a, %d %b %Y %H:%M:%S %Z")
-    #     except ValueError as e:
-    #         return {'message': f'Error parsing timer string: {str(e)}'}, 400
-        
-    #     code_execution = CodeExecution(
-    #         user_code=sanitized_user_code,
-    #         code_output=code_output,  # Include code_output
-    #         language=language,
-    #         timer=timer
-    #     )
-    #     db.session.add(code_execution)
-    #     db.session.commit()
-        
-    #     return {'message': 'Code submitted successfully'}, 201
-
 
     def post(self):
         data = request.json
 
         user_code = data.get('user_code')
         language = data.get('language')
-        timer_str = data.get('timer')  # Extract timer as string from request payload
+        timer_seconds = data.get('timer')  # Extract timer in seconds from request payload
         code_output = data.get('code_output')  # Extract code_output from request payload
-        
+
         if not user_code or not user_code.strip():
             return {'message': 'User code cannot be empty'}, 400
-        
+
         sanitized_user_code = bleach.clean(user_code)
-        
-        # Ensure that timer_str matches the ISO format ("%Y-%m-%d %H:%M:%S")
+
         try:
-            timer = datetime.strptime(timer_str, "%Y-%m-%d %H:%M:%S")
+            timer = int(timer_seconds)  # Convert timer to integer (seconds)
         except ValueError as e:
-            return {'message': f'Error parsing timer string: {str(e)}. Required format is "%Y-%m-%d %H:%M:%S"'}, 400
-        
+            return {'message': f'Error parsing timer seconds: {str(e)}. Timer must be an integer representing seconds'}, 400
+
         code_execution = CodeExecution(
             user_code=sanitized_user_code,
             code_output=code_output,  # Include code_output
             language=language,
-            timer=timer
+            timer=timer  # Store timer as seconds
         )
         db.session.add(code_execution)
         db.session.commit()
-        
+
         return {'message': 'Code submitted successfully'}, 201
+
 
 api.add_resource(CodeExecutionResource, '/code_execution', '/code_execution/<int:code_execution_id>')
 
