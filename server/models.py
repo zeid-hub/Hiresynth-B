@@ -196,6 +196,7 @@ class CodeResult(db.Model):
     user_code = db.Column(db.Text, nullable=False)
     code_output = db.Column(db.Text, nullable=True)
     language = db.Column(db.String(), nullable=False)
+    question = db.Column(db.String(), nullable=False)
 
     def __repr__(self):
         return f"<CodeResult id={self.id}>"

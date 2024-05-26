@@ -457,16 +457,18 @@ def add_credit_card():
         'amount_transacted': new_card.amount_transacted
     }), 201
 
+# POST route to submit code result
 @app.route('/code_results', methods=['POST'])
 def submit_code_result():
     data = request.json
     user_code = data.get('user_code')
     code_output = data.get('code_output')
     language = data.get('language')
+    question = data.get('question')  # Include question from the request data
 
     # Validate data if necessary
 
-    code_result = CodeResult(user_code=user_code, code_output=code_output, language=language)
+    code_result = CodeResult(user_code=user_code, code_output=code_output, language=language, question=question)
     db.session.add(code_result)
     db.session.commit()
 
@@ -481,11 +483,12 @@ def get_all_code_results():
             'id': code_result.id,
             'user_code': code_result.user_code,
             'code_output': code_result.code_output,
-            'language': code_result.language
+            'language': code_result.language,
+            'question': code_result.question  # Include question in the response
         }
         for code_result in code_results
     ]
     return jsonify(code_results_list), 200
-
+    
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
