@@ -475,42 +475,20 @@ def submit_code_result():
     return jsonify({'message': 'Code result saved successfully'}), 201
 
 # GET route to retrieve all code results
-# @app.route('/code_results', methods=['GET'])
-# def get_all_code_results():
-#     code_results = CodeResult.query.all()
-#     code_results_list = [
-#         {
-#             'id': code_result.id,
-#             'user_code': code_result.user_code,
-#             'code_output': code_result.code_output,
-#             'language': code_result.language,
-#             'question': code_result.question  # Include question in the response
-#         }
-#         for code_result in code_results
-#     ]
-#     return jsonify(code_results_list), 200
-
-@app.route('/questions', methods=['GET'])
-def get_all_questions():
-    questions = Question.query.all()
-    questions_list = [
+@app.route('/code_results', methods=['GET'])
+def get_all_code_results():
+    code_results = CodeResult.query.all()
+    code_results_list = [
         {
-            'id': question.id,
-            'text': question.text,
-            'codeResults': [
-                {
-                    'id': code_result.id,
-                    'user_code': code_result.user_code,
-                    'code_output': code_result.code_output,
-                    'language': code_result.language
-                }
-                for code_result in question.code_results
-            ]
+            'id': code_result.id,
+            'user_code': code_result.user_code,
+            'code_output': code_result.code_output,
+            'language': code_result.language,
+            'question': code_result.question  # Include question in the response
         }
-        for question in questions
+        for code_result in code_results
     ]
-    return jsonify(questions_list), 200
-
-
+    return jsonify(code_results_list), 200
+    
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
