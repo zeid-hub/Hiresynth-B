@@ -1,7 +1,7 @@
 from flask import request
 from flask_cors import CORS
 from config import app, db, request, make_response, api, Resource, jsonify, jwt, create_access_token, jwt_required, current_user, get_jwt, set_access_cookies
-from models import db, User, CodeChallenge, TokenBlocklist, AssessmentScore, CodeExecution, CreditCard
+from models import db, User, CodeChallenge, TokenBlocklist, AssessmentScore, CodeExecution, CreditCard, CodeResult
 # import datetime
 from datetime import timedelta, timezone, datetime
 import subprocess
@@ -349,6 +349,7 @@ runUserCode();
 
 api.add_resource(Execution, '/execute_code')
 
+
 class CodeExecutionResource(Resource):
     def get(self, code_execution_id=None):
         if code_execution_id is None:
@@ -359,8 +360,7 @@ class CodeExecutionResource(Resource):
                     "id": code_execution.id,
                     "user_code": code_execution.user_code,
                     "code_output": code_execution.code_output,
-                    "language": code_execution.language,
-                    "timer": code_execution.timer.strftime('%Y-%m-%d %H:%M:%S')  # Format datetime to string
+                    "language": code_execution.language
                 }
                 for code_execution in code_executions
             ]
@@ -372,36 +372,35 @@ class CodeExecutionResource(Resource):
                 return {
                     'user_code': code_execution.user_code,
                     'code_output': code_execution.code_output,
-                    'language': code_execution.language,
-                    'timer': code_execution.timer.strftime('%Y-%m-%d %H:%M:%S')  # Format datetime to string
+                    'language': code_execution.language
                 }, 200
             else:
                 return {'message': 'Code execution not found'}, 404
 
-def post(self):
-    data = request.json
+    def post(self):
+        data = request.json
 
-    user_code = data.get('user_code')
-    language = data.get('language')
-    code_output = data.get('code_output')  # Extract code_output from request payload
+        user_code = data.get('user_code')
+        language = data.get('language')
+        code_output = data.get('code_output')  # Extract code_output from request payload
 
-    if not user_code or not user_code.strip():
-        return {'message': 'User code cannot be empty'}, 400
+        if not user_code or not user_code.strip():
+            return {'message': 'User code cannot be empty'}, 400
 
-    sanitized_user_code = bleach.clean(user_code)
+        sanitized_user_code = bleach.clean(user_code)
 
-    code_execution = CodeExecution(
-        user_code=sanitized_user_code,
-        code_output=code_output,  # Include code_output
-        language=language
-    )
-    db.session.add(code_execution)
-    db.session.commit()
+        code_execution = CodeExecution(
+            user_code=sanitized_user_code,
+            code_output=code_output,  # Include code_output
+            language=language
+        )
+        db.session.add(code_execution)
+        db.session.commit()
 
-    return {'message': 'Code submitted successfully'}, 201
-
+        return {'message': 'Code submitted successfully'}, 201
 
 api.add_resource(CodeExecutionResource, '/code_execution', '/code_execution/<int:code_execution_id>')
+
 
 # Route to get all credit cards
 @app.route('/credit_cards', methods=['GET'])
@@ -457,6 +456,36 @@ def add_credit_card():
         'city': new_card.city,
         'amount_transacted': new_card.amount_transacted
     }), 201
+
+@app.route('/code_results', methods=['POST'])
+def submit_code_result():
+    data = request.json
+    user_code = data.get('user_code')
+    code_output = data.get('code_output')
+    language = data.get('language')
+
+    # Validate data if necessary
+
+    code_result = CodeResult(user_code=user_code, code_output=code_output, language=language)
+    db.session.add(code_result)
+    db.session.commit()
+
+    return jsonify({'message': 'Code result saved successfully'}), 201
+
+# GET route to retrieve all code results
+@app.route('/code_results', methods=['GET'])
+def get_all_code_results():
+    code_results = CodeResult.query.all()
+    code_results_list = [
+        {
+            'id': code_result.id,
+            'user_code': code_result.user_code,
+            'code_output': code_result.code_output,
+            'language': code_result.language
+        }
+        for code_result in code_results
+    ]
+    return jsonify(code_results_list), 200
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)

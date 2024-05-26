@@ -159,16 +159,14 @@ class AssessmentScore(db.Model):
         return f"<AssessmentScore id={self.id}, score={self.score}, completion_date={self.completion_date}>"
 
 
-
 class CodeExecution(db.Model):
     __tablename__ = 'code_executions'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', name='fk_code_executions_user_id'), nullable=False)  # Explicitly name the foreign key constraint
     user_code = db.Column(db.Text, nullable=False)
     code_output = db.Column(db.Text, nullable=True)
     language = db.Column(db.String(), nullable=False)
-    timer = db.Column(db.Integer, nullable=True)
 
     user = db.relationship('User', back_populates='code_executions')
 
@@ -189,3 +187,15 @@ class CreditCard(db.Model):
 
     def __repr__(self):
         return f"<CreditCard {self.card_number}, Expiry: {self.expiration_date}, CVV: {self.cvv}, Amount Transacted: {self.amount_transacted}>"
+
+
+class CodeResult(db.Model):
+    __tablename__ = 'code_results'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_code = db.Column(db.Text, nullable=False)
+    code_output = db.Column(db.Text, nullable=True)
+    language = db.Column(db.String(), nullable=False)
+
+    def __repr__(self):
+        return f"<CodeResult id={self.id}>"

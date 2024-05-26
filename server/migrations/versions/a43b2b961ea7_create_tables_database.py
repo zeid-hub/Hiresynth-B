@@ -1,8 +1,8 @@
-"""create tables
+"""Create tables database
 
-Revision ID: df8d173ae230
+Revision ID: a43b2b961ea7
 Revises: 
-Create Date: 2024-05-25 18:27:58.550477
+Create Date: 2024-05-26 16:34:13.704215
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'df8d173ae230'
+revision = 'a43b2b961ea7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,6 +24,23 @@ def upgrade():
     sa.Column('description', sa.Text(), nullable=False),
     sa.Column('languages', sa.String(), nullable=False),
     sa.Column('correct_answer', sa.Text(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('code_results',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_code', sa.Text(), nullable=False),
+    sa.Column('code_output', sa.Text(), nullable=True),
+    sa.Column('language', sa.String(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('credit_cards',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('card_number', sa.String(length=16), nullable=False),
+    sa.Column('expiration_date', sa.String(length=7), nullable=False),
+    sa.Column('cvv', sa.String(length=3), nullable=False),
+    sa.Column('country', sa.String(), nullable=False),
+    sa.Column('city', sa.String(), nullable=False),
+    sa.Column('amount_transacted', sa.Float(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('token_blocklist',
@@ -54,6 +71,15 @@ def upgrade():
     sa.Column('status', sa.String(length=50), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('code_executions',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('user_code', sa.Text(), nullable=False),
+    sa.Column('code_output', sa.Text(), nullable=True),
+    sa.Column('language', sa.String(), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name='fk_code_executions_user_id'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('feedbacks',
@@ -122,11 +148,14 @@ def downgrade():
     op.drop_table('invitations')
     op.drop_table('assessment_scores')
     op.drop_table('feedbacks')
+    op.drop_table('code_executions')
     op.drop_table('assessments')
     op.drop_table('users')
     with op.batch_alter_table('token_blocklist', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_token_blocklist_jti'))
 
     op.drop_table('token_blocklist')
+    op.drop_table('credit_cards')
+    op.drop_table('code_results')
     op.drop_table('code_challenges')
     # ### end Alembic commands ###
