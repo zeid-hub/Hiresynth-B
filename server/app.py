@@ -378,35 +378,27 @@ class CodeExecutionResource(Resource):
             else:
                 return {'message': 'Code execution not found'}, 404
 
+def post(self):
+    data = request.json
 
-    def post(self):
-        data = request.json
+    user_code = data.get('user_code')
+    language = data.get('language')
+    code_output = data.get('code_output')  # Extract code_output from request payload
 
-        user_code = data.get('user_code')
-        language = data.get('language')
-        timer_seconds = data.get('timer')  # Extract timer in seconds from request payload
-        code_output = data.get('code_output')  # Extract code_output from request payload
+    if not user_code or not user_code.strip():
+        return {'message': 'User code cannot be empty'}, 400
 
-        if not user_code or not user_code.strip():
-            return {'message': 'User code cannot be empty'}, 400
+    sanitized_user_code = bleach.clean(user_code)
 
-        sanitized_user_code = bleach.clean(user_code)
+    code_execution = CodeExecution(
+        user_code=sanitized_user_code,
+        code_output=code_output,  # Include code_output
+        language=language
+    )
+    db.session.add(code_execution)
+    db.session.commit()
 
-        try:
-            timer = int(timer_seconds)  # Convert timer to integer (seconds)
-        except ValueError as e:
-            return {'message': f'Error parsing timer seconds: {str(e)}. Timer must be an integer representing seconds'}, 400
-
-        code_execution = CodeExecution(
-            user_code=sanitized_user_code,
-            code_output=code_output,  # Include code_output
-            language=language,
-            timer=timer  # Store timer as seconds
-        )
-        db.session.add(code_execution)
-        db.session.commit()
-
-        return {'message': 'Code submitted successfully'}, 201
+    return {'message': 'Code submitted successfully'}, 201
 
 
 api.add_resource(CodeExecutionResource, '/code_execution', '/code_execution/<int:code_execution_id>')
