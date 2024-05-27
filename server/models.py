@@ -60,7 +60,6 @@ class Feedback(db.Model):
     feedback_text = db.Column(db.String)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-    # Establishing the one-to-many relationship with Feedback model
     user = db.relationship("User", back_populates="feedbacks")
 
     def __repr__(self):
@@ -211,6 +210,9 @@ class CodeResult(db.Model):
     code_output = db.Column(db.Text, nullable=True)
     language = db.Column(db.String(), nullable=False)
     question = db.Column(db.String(), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    user = db.relationship('User', backref='code_results')
 
     def __repr__(self):
         return f"<CodeResult id={self.id}>"

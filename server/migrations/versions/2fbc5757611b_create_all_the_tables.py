@@ -1,8 +1,8 @@
-"""Create tables database
+"""Create all the tables
 
-Revision ID: a43b2b961ea7
+Revision ID: 2fbc5757611b
 Revises: 
-Create Date: 2024-05-26 16:34:13.704215
+Create Date: 2024-05-27 12:13:27.136756
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a43b2b961ea7'
+revision = '2fbc5757611b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,13 +24,6 @@ def upgrade():
     sa.Column('description', sa.Text(), nullable=False),
     sa.Column('languages', sa.String(), nullable=False),
     sa.Column('correct_answer', sa.Text(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('code_results',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_code', sa.Text(), nullable=False),
-    sa.Column('code_output', sa.Text(), nullable=True),
-    sa.Column('language', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('credit_cards',
@@ -80,6 +73,16 @@ def upgrade():
     sa.Column('code_output', sa.Text(), nullable=True),
     sa.Column('language', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], name='fk_code_executions_user_id'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('code_results',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_code', sa.Text(), nullable=False),
+    sa.Column('code_output', sa.Text(), nullable=True),
+    sa.Column('language', sa.String(), nullable=False),
+    sa.Column('question', sa.String(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('feedbacks',
@@ -148,6 +151,7 @@ def downgrade():
     op.drop_table('invitations')
     op.drop_table('assessment_scores')
     op.drop_table('feedbacks')
+    op.drop_table('code_results')
     op.drop_table('code_executions')
     op.drop_table('assessments')
     op.drop_table('users')
@@ -156,6 +160,5 @@ def downgrade():
 
     op.drop_table('token_blocklist')
     op.drop_table('credit_cards')
-    op.drop_table('code_results')
     op.drop_table('code_challenges')
     # ### end Alembic commands ###
