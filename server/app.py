@@ -504,7 +504,8 @@ def submit_code_result():
     user_code = data.get('user_code')
     code_output = data.get('code_output')
     language = data.get('language')
-    question = data.get('question')  # Include question from the request data
+    question = data.get('question')
+    user_id = request.args.get('user_id')
 
     # Validate data if necessary
 
