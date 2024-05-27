@@ -52,6 +52,7 @@ api.add_resource(Home, "/")
 class AddUser(Resource):
     def post(self):
         data = request.get_json()
+        print(data)
         username = data.get('username')
         email = data.get('email')
         role = data.get('role')
