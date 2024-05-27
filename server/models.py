@@ -210,9 +210,6 @@ class CodeResult(db.Model):
     code_output = db.Column(db.Text, nullable=True)
     language = db.Column(db.String(), nullable=False)
     question = db.Column(db.String(), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-
-    user = db.relationship('User', backref='code_results')
 
     def __repr__(self):
         return f"<CodeResult id={self.id}>"

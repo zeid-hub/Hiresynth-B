@@ -457,46 +457,21 @@ def add_credit_card():
         'amount_transacted': new_card.amount_transacted
     }), 201
 
-# @app.route('/code_results', methods=['GET'])
-# def get_all_code_results():
-#     code_results = CodeResult.query.all()
-#     code_results_list = [
-#         {
-#             'id': code_result.id,
-#             'user_code': code_result.user_code,
-#             'code_output': code_result.code_output,
-#             'language': code_result.language,
-#             'question': code_result.question  # Include question in the response
-#         }
-#         for code_result in code_results
-#     ]
-#     return jsonify(code_results_list), 200
-
 @app.route('/code_results', methods=['GET'])
 def get_all_code_results():
     code_results = CodeResult.query.all()
-    code_results_list = []
-
-    for code_result in code_results:
-        user_identifier = code_result.user_identifier  # Assuming user_identifier is the field containing the user's identifier
-        user = User.query.filter_by(username=user_identifier).first()  # Fetch the user based on the identifier
-        if user:
-            username = user.username
-        else:
-            username = None
-        
-        code_result_data = {
+    code_results_list = [
+        {
             'id': code_result.id,
-            'user_identifier': user_identifier,
-            'username': username,
             'user_code': code_result.user_code,
             'code_output': code_result.code_output,
             'language': code_result.language,
-            'question': code_result.question
+            'question': code_result.question  # Include question in the response
         }
-        code_results_list.append(code_result_data)
-
+        for code_result in code_results
+    ]
     return jsonify(code_results_list), 200
+
 
 @app.route('/code_results', methods=['POST'])
 def submit_code_result():
@@ -505,7 +480,6 @@ def submit_code_result():
     code_output = data.get('code_output')
     language = data.get('language')
     question = data.get('question')
-    user_id = request.args.get('user_id')
 
     # Validate data if necessary
 
